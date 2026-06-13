@@ -1,5 +1,5 @@
 ;============================================================================================
-Compute moisture budget: use for pclimcontrol and piclim2xdust experiment
+Compute moisture budget: use for piclimcontrol and piclim2xdust experiment
 ;============================================================================================
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
