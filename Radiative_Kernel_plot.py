@@ -15,13 +15,10 @@ from matplotlib.path import Path as MplPath
 from matplotlib.patches import PathPatch, Rectangle, Patch
 from matplotlib.colors import TwoSlopeNorm
 
-# ============================================================
-# PATH
-# ============================================================
-DATA_DIR = Path("/Users/precious/Downloads/moisture-budget/Ryan/Ryan5")
 
-# Precipitation files used only to draw the Control and 2xDust ITCZ lines
-# on panels (d), (e), and (f). This matches the precipitation/DOD figures.
+DATA_DIR = Path("/Users/precious/Downloads/moisture-budget")
+
+
 PR_ITCZ_DIR = Path("/Users/precious/Downloads/moisture-budget/pr")
 
 os.chdir(DATA_DIR)
@@ -70,10 +67,10 @@ MME_TOP_FILES = {
     "fluxanom": "MME_fluxanom.nc",
 }
 
-# full map domain
+
 lon0, lon1, lat0, lat1 = -60, 40, -20, 40
 
-# lat-month domain
+
 lon_min_latmon, lon_max_latmon = -40, 5
 lat_min_data, lat_max_data = -12, 25
 lat_min_plot, lat_max_plot = -10, 25
@@ -88,9 +85,7 @@ plt.rcParams["hatch.color"] = "gray"
 plt.rcParams["hatch.linewidth"] = 0.5
 
 
-# ============================================================
-# HELPERS
-# ============================================================
+# ----------Functions---------
 def coord_names(ds_or_da):
     lon_candidates = ["lon", "longitude", "x", "rlon", "nav_lon"]
     lat_candidates = ["lat", "latitude", "y", "rlat", "nav_lat"]
@@ -325,12 +320,7 @@ def back_to_180_for_plot(da):
 
 def fill_allnan_lon_columns(da):
     """
-    Fill longitude columns that are completely NaN using the average of
-    the immediate west/east neighboring columns.
-
-    This removes artificial white vertical seams in IRF maps caused by a
-    bad all-NaN longitude column after the lon coordinate is repaired.
-    Works for 2D, time-lat-lon, and year-lat-lon arrays.
+    
     """
     da = rename_lonlat_to_standard(da)
     da = sort_lat_if_needed(da)
@@ -616,21 +606,6 @@ def build_common_grid_irf_wrap():
     return common_lon, common_lat
 
 
-# ============================================================
-# Curved frame
-# ============================================================
-n = 200
-f = np.linspace(0, 1, n)
-amp_top, amp_bot = 0.28, 0.32
-
-top = np.column_stack((np.linspace(lon0, lon1, n), lat1 - amp_top * np.sin(np.pi * f)))
-right = np.column_stack(([lon1] * n, np.linspace(lat1, lat0, n)))
-bottom = np.column_stack((np.linspace(lon1, lon0, n), lat0 - amp_bot * np.sin(np.pi * f)))
-left = np.column_stack(([lon0] * n, np.linspace(lat0, lat1, n)))
-
-pts = np.vstack([top, right, bottom, left, top[:1]])
-codes = [MplPath.MOVETO] + [MplPath.LINETO] * (len(pts) - 2) + [MplPath.CLOSEPOLY]
-box_path = MplPath(pts, codes)
 
 
 def add_shaded_boundary(ax, lw=1.8, shade_width=3.0,
@@ -691,8 +666,7 @@ def draw_boxes(ax, lw=1.8):
 
 
 # ============================================================
-# LOAD MODEL DATA
-# ============================================================
+#
 def load_reference_pr(model):
     fname = DATA_DIR / f"pr_{model}.nc"
     ds = open_dataset_robust(fname, decode_times=True)
@@ -753,9 +727,9 @@ def load_model_fields(model):
     return out
 
 
-# ============================================================
+
 # DIAGNOSTICS
-# ============================================================
+
 def annual_map_from_precomputed_mme(field_key):
     da = load_top_mme_file(field_key)
     da = prep_component_map(da)
@@ -794,7 +768,7 @@ def annual_map_irf_from_models(field_model_data):
             lat_top=lat1,
         )
 
-        # Fill any internal all-NaN lon seam before interpolation.
+        #
         annual_field = fill_allnan_lon_columns(annual_field)
 
         if annual_field["lon"].size == 0 or annual_field["lat"].size == 0:
@@ -820,7 +794,7 @@ def annual_map_irf_from_models(field_model_data):
 
     mme = back_to_180_for_plot(mme)
 
-    # Final seam repair on the MME map after returning to -180..180 longitudes.
+    # 
     mme = fill_allnan_lon_columns(mme)
     mme = fix_internal_lon_gap(mme, target_lon=0.0, max_bad_frac=0.5)
 
@@ -870,21 +844,17 @@ def monthly_latmon_mme(field_model_data):
     return xr.concat(latmon_list, dim="model").mean("model", skipna=True)
 
 
-# ============================================================
-# ITCZ lines for latitude-month panels
-# Precipitation-centroid approach
-# ============================================================
+
+# ITCZ lines for latitude-month 
+
 ITCZ_LAT_MIN = -20
 ITCZ_LAT_MAX = 20
-ITCZ_SMOOTH_MONTH = 3
+#ITCZ_SMOOTH_MONTH = 3
 
 
 def open_pr_itcz_file(kind):
     """
-    Load MME precipitation for ITCZ curves.
-
-    kind = "ctl" or "dust". The function checks common filename patterns
-    in PR_ITCZ_DIR first, then DATA_DIR as a fallback.
+    
     """
     if kind == "ctl":
         candidates = [
@@ -930,14 +900,7 @@ def open_pr_itcz_file(kind):
 
 def monthly_pr_latmon_for_itcz(pr_da):
     """
-    Make a monthly latitude-precipitation climatology for ITCZ centroid.
-
-    Steps:
-    1. clean precipitation
-    2. subset to the same longitude domain as the latitude-month panels
-    3. subset latitude to 20S-20N for centroid calculation
-    4. compute monthly climatology
-    5. zonal mean over longitude
+   
     """
     if pr_da is None:
         return None
@@ -952,9 +915,7 @@ def monthly_pr_latmon_for_itcz(pr_da):
         lat_bounds=(ITCZ_LAT_MIN, ITCZ_LAT_MAX),
     )
 
-    # Convert precipitation to mm/day if units are flux-like.
-    # The centroid latitude does not depend on this scaling,
-    # but it keeps the units consistent.
+   
     units = str(da.attrs.get("units", "")).lower()
 
     if "s-1" in units or "s^-1" in units or "/s" in units:
@@ -981,8 +942,7 @@ def itcz_lat_month_centroid(
         phi_cent =
             sum(phi * cos(phi) * P(phi)) / sum(cos(phi) * P(phi))
 
-    Here P(phi) is the monthly zonal-mean precipitation over
-    lon_min_latmon to lon_max_latmon.
+    
     """
     if pr_latmon is None:
         return None
@@ -1105,9 +1065,8 @@ def model_box_stats(field_model_data, box):
     return means, sems
 
 
-# ============================================================
-# PLOT HELPERS
-# ============================================================
+# 
+
 def plot_map_panel(ax, da_delta, title=None, panel_label=None, levels=None, norm=None):
     lon, lat, Z = xyZ(da_delta)
 
@@ -1394,18 +1353,14 @@ def plot_box_bar_panel(
         ax.legend(handles=handles, frameon=True, fontsize=9, loc="upper right")
 
 
-# ============================================================
-# LOAD MODEL DATA
-# ============================================================
+# -------------
 model_fields = {}
 
 for _, m in models:
     model_fields[m] = load_model_fields(m)
 
 
-# ============================================================
-# DIAGNOSTICS
-# ============================================================
+# 
 annual_map = {}
 latmon = {}
 bar_stats = {}
@@ -1460,9 +1415,9 @@ for field_key in field_order:
     }
 
 
-# ============================================================
+
 # COLOR SCALES
-# ============================================================
+
 if len(top_map_vals) > 0:
     top_map_vals = np.concatenate(top_map_vals)
     vmax_top = float(np.nanquantile(np.abs(top_map_vals), 0.95))
@@ -1526,9 +1481,9 @@ else:
 ctl_itcz_line, dust_itcz_line = load_itcz_lines_for_panels()
 
 
-# ============================================================
+
 # FIGURE
-# ============================================================
+
 proj = ccrs.LambertConformal(
     central_longitude=-10,
     central_latitude=10,
@@ -1573,9 +1528,9 @@ letters = [
 ]
 
 
-# ============================================================
+
 # TOP ROW
-# ============================================================
+
 top_images = []
 
 for i, field_key in enumerate(field_order):
@@ -1591,9 +1546,8 @@ for i, field_key in enumerate(field_order):
     top_images.append(im_map)
 
 
-# ============================================================
 # MIDDLE ROW
-# ============================================================
+
 for i, field_key in enumerate(field_order):
     plot_latmonth_panel(
         ax=axes_mid[i],
@@ -1614,9 +1568,9 @@ for i, field_key in enumerate(field_order):
         axes_mid[i].set_yticklabels([])
 
 
-# ============================================================
+
 # BOTTOM ROW
-# ============================================================
+
 for i, field_key in enumerate(field_order):
     plot_box_bar_panel(
         ax=axes_bot[i],
@@ -1633,9 +1587,9 @@ for i, field_key in enumerate(field_order):
     )
 
 
-# ============================================================
+
 # COLORBAR
-# ============================================================
+
 cax = fig.add_axes([0.92, 0.33, 0.018, 0.42])
 
 cbar = fig.colorbar(
@@ -1649,9 +1603,7 @@ cbar.set_label(r"(W m$^{-2}$)", fontsize=13)
 cbar.ax.tick_params(labelsize=10)
 
 
-# ============================================================
-# SAVE
-# ============================================================
+
 plt.savefig(
     "figure4_updated_40-5.png",
     dpi=300,
