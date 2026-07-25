@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 import os
 import math
 import numpy as np
@@ -6,15 +6,13 @@ import xarray as xr
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
-# ============================================================
-# SETTINGS YOU EDIT
-# ============================================================
+
 ROOT   = "/home/precious/Downloads/aerchem2/ForcingFeedbacksResults_CMIP6_2xdust/net/aerchem/p3/p4/moisture-budget_models"
 REGION = "north"   # "north" (0–10N) or "equatorial" (-10–0)
 ADD_MME = True
 
 SEASONS = ["DJF", "MAM", "JJA", "SON"]
-MODELS  = ["cnrm", "gfdl", "giss", "ipsl", "miroc6", "mpi", "ukesm"]  # MME added below
+MODELS  = ["cnrm", "gfdl", "giss", "ipsl", "miroc6", "mpi", "ukesm"]  #
 
 MODEL_TITLES = {
     "cnrm": "CNRM-ESM2-1",
@@ -27,7 +25,7 @@ MODEL_TITLES = {
     "mme": "MME",
 }
 
-# Wide enough domain for derivatives, consistent with your map script
+
 LON0, LON1, LAT0, LAT1 = -60, 40, -20, 40
 
 # Vertical integral bounds
@@ -54,18 +52,16 @@ SEASON_YLIM = {
     "SON": 0.30,
 }
 
-# ============================================================
+
 # CONSTANTS
-# ============================================================
+
 R_EARTH = 6_371_000.0
 DEG2RAD = np.pi / 180.0
 G = 9.80665
 SEC_PER_DAY = 86400.0
 MIN_VALID_SEGMENTS = 3
 
-# ============================================================
-# HELPERS
-# ============================================================
+# =--------functions----------
 def ensure_lat_lon_names(da):
     latn = "lat" if "lat" in da.coords else ("latitude" if "latitude" in da.coords else None)
     lonn = "lon" if "lon" in da.coords else ("longitude" if "longitude" in da.coords else None)
@@ -434,9 +430,9 @@ def compute_model_vector(model, season, region):
     )
 
 
-# ============================================================
+# 
 # 4x8 FIGURE
-# ============================================================
+
 def make_4x8_allseasons(region=REGION, add_mme=True):
     model_cols = MODELS.copy()
 
@@ -608,9 +604,9 @@ def make_4x8_allseasons(region=REGION, add_mme=True):
     print("Saved:", OUTPNG)
 
 
-# ============================================================
+
 # RUN
-# ============================================================
+
 if __name__ == "__main__":
     os.chdir(ROOT)
     make_4x8_allseasons(region=REGION, add_mme=ADD_MME)
