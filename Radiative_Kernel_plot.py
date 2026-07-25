@@ -23,9 +23,7 @@ PR_ITCZ_DIR = Path("/Users/precious/Downloads/moisture-budget/pr")
 
 os.chdir(DATA_DIR)
 
-# ============================================================
-# CONFIG
-# ============================================================
+
 models = [
     ("CNRM-ESM2-1", "cnrm"),
     ("GFDL-ESM4", "gfdl"),
